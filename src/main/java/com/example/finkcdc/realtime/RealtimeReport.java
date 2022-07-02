@@ -1,6 +1,8 @@
 package com.example.finkcdc.realtime;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.flink.configuration.Configuration;
+import org.apache.flink.configuration.RestOptions;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -25,8 +27,11 @@ public class RealtimeReport {
 
     @PostConstruct
     public void run() {
-        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment()
-                .enableCheckpointing(3000, CheckpointingMode.EXACTLY_ONCE)
+        Configuration configuration = new Configuration();
+        configuration.setString(RestOptions.BIND_PORT, "8081");
+        StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration)
+                .enableCheckpointing(5000, CheckpointingMode.EXACTLY_ONCE)
+                .setMaxParallelism(4)
                 .setParallelism(1);
         EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
@@ -42,7 +47,7 @@ public class RealtimeReport {
                 "'username' = 'root', " +
                 "'password' = '', " +
                 "'database-name' = 'mine', " +
-                "'table-name' = 'student'," +
+                "'table-name' = 'student_[0-1]+'," +
                 "'server-id'   = '1'" +
                 ")");
 
