@@ -25,7 +25,7 @@ public class RealtimeReport {
     public static void main(String[] args) {
     }
 
-    @PostConstruct
+//    @PostConstruct
     public void run() {
         Configuration configuration = new Configuration();
         configuration.setString(RestOptions.BIND_PORT, "8081");
