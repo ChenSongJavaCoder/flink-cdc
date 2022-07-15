@@ -3,6 +3,7 @@ package com.example.finkcdc.realtime;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.configuration.RestOptions;
+import org.apache.flink.configuration.StateBackendOptions;
 import org.apache.flink.streaming.api.CheckpointingMode;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.table.api.EnvironmentSettings;
@@ -72,7 +73,8 @@ public class InvoiceStatisticsReport {
             "'password' = 'LjJl*ub#4*7^mJo', " +
             "'database-name' = 'ims', " +
             "'table-name' = 'kp_output_invoice'," +
-            "'server-id'   = '5400-5404'" +
+            "'server-id'   = '5400-5404'," +
+            "'server-time-zone'   = 'Asia/Shanghai'" +
             ")";
 
     static String sinkTable = "CREATE TABLE `sink_kp_output_invoice` (" +
@@ -108,12 +110,15 @@ public class InvoiceStatisticsReport {
     static String changeLog = "select * from source_kp_output_invoice";
 
 
-    @PostConstruct
+//    @PostConstruct
     public void run() {
         Configuration configuration = new Configuration();
         configuration.setString(RestOptions.BIND_PORT, "8082");
+//        configuration.setString(CheckpointingOptions.CHECKPOINT_STORAGE, "jobmanager");
+//        configuration.setString(SavepointConfigOptions.SAVEPOINT_PATH, "/Users/chensong/Desktop/flink_savepoint/");
+        configuration.setString(StateBackendOptions.STATE_BACKEND, "hashmap");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration)
-                .enableCheckpointing(5000, CheckpointingMode.EXACTLY_ONCE)
+                .enableCheckpointing(30000, CheckpointingMode.EXACTLY_ONCE)
                 .setMaxParallelism(4)
                 .setParallelism(4);
         EnvironmentSettings settings = EnvironmentSettings.newInstance().inStreamingMode().build();
@@ -126,6 +131,5 @@ public class InvoiceStatisticsReport {
         tEnv.executeSql(sourceTable);
         tEnv.executeSql(sinkTable);
         tEnv.executeSql(sourceToSink);
-//        tEnv.executeSql(changeLog).print();
     }
 }
