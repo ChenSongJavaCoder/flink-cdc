@@ -19,6 +19,7 @@
         <scala.binary.version>2.12</scala.binary.version>
         <flink.ververica.version>2.2.1</flink.ververica.version>
         <mysql.connector.version>8.0.15</mysql.connector.version>
+        <elasticsearch.version>6.5.4</elasticsearch.version>
     </properties>
     <dependencies>
         <dependency>
@@ -88,19 +89,28 @@
             <artifactId>flink-clients_${scala.binary.version}</artifactId>
             <version>${flink.version}</version>
         </dependency>
-<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.apache.flink/flink-connector-elasticsearch6 &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.apache.flink</groupId>-->
-<!--            <artifactId>flink-connector-elasticsearch6_${scala.binary.version}</artifactId>-->
-<!--            <version>${flink.version}</version>-->
-<!--        </dependency>-->
-<!--        &lt;!&ndash; https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch &ndash;&gt;-->
-<!--        <dependency>-->
-<!--            <groupId>org.elasticsearch</groupId>-->
-<!--            <artifactId>elasticsearch</artifactId>-->
-<!--            <version>6.5.4</version>-->
-<!--        </dependency>-->
-
+        <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-connector-elasticsearch6 -->
+        <dependency>
+            <groupId>org.apache.flink</groupId>
+            <artifactId>flink-connector-elasticsearch6_${scala.binary.version}</artifactId>
+            <version>${flink.version}</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.elasticsearch/elasticsearch -->
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
         <!-- https://mvnrepository.com/artifact/org.apache.flink/flink-json -->
         <dependency>
             <groupId>org.apache.flink</groupId>

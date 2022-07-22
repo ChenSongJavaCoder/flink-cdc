@@ -237,6 +237,72 @@ public class InvoiceStatistics {
             "     'password' = 'LjJl*ub#4*7^mJo'" +
             "     )";
 
+    static String sourceTableEsInvoice =
+            "CREATE TEMPORARY TABLE sink_es_invoice_vat (\n" +
+                    "id BIGINT NOT NULL COMMENT '主键id',\n" +
+                    "zhqysh VARCHAR NOT NULL COMMENT '账户企业税号',\n" +
+                    "qyfpfl INT NOT NULL COMMENT '企业发票分类（0-销项，1-进项）',\n" +
+                    "fpdm VARCHAR NOT NULL COMMENT '发票代码',\n" +
+                    "fphm VARCHAR NOT NULL COMMENT '发票号码',\n" +
+                    "kprq TIMESTAMP NOT NULL COMMENT '开票日期',\n" +
+                    "fplx INT COMMENT '发票类型（0-红字、1-蓝字）',\n" +
+                    "fpzt INT COMMENT '发票状态',\n" +
+                    "fpzldm VARCHAR NOT NULL COMMENT '发票种类',\n" +
+                    "tspzbs VARCHAR NOT NULL COMMENT '特殊票种标识',\n" +
+                    "ncpbz INT NOT NULL COMMENT '农产品标志（0-非农产品，1-农产品销售，2-农产品收购）',\n" +
+                    "jym VARCHAR ( 100 ) COMMENT '校验码',\n" +
+                    "mmq VARCHAR ( 200 ) COMMENT '密码区',\n" +
+                    "bz VARCHAR ( 250 ) COMMENT '备注',\n" +
+                    "xsfmc VARCHAR ( 100 ) COMMENT '销售方名称',\n" +
+                    "xsfsh VARCHAR ( 100 ) NOT NULL COMMENT '销售方税号',\n" +
+                    "xsfkhh VARCHAR ( 100 ) COMMENT '销售方开户行',\n" +
+                    "xsfyhzh VARCHAR ( 100 ) COMMENT '销售方银行账号',\n" +
+                    "xsfkhhzh VARCHAR ( 100 ) COMMENT '销售方开户行及账号',\n" +
+                    "xsfdz VARCHAR ( 255 ) COMMENT '销售方地址',\n" +
+                    "xsfdh VARCHAR ( 30 ) COMMENT '销售方电话',\n" +
+                    "xsfdzdh VARCHAR ( 255 ) COMMENT '销售方地址电话',\n" +
+                    "gmfmc VARCHAR ( 100 ) COMMENT '购买方名称',\n" +
+                    "gmfsh VARCHAR ( 100 ) NOT NULL COMMENT '购买方税号',\n" +
+                    "gmfkhh VARCHAR ( 100 ) COMMENT '购买方开户行',\n" +
+                    "gmfyhzh VARCHAR ( 100 ) COMMENT '购买方银行账号',\n" +
+                    "gmfkhhzh VARCHAR ( 100 ) COMMENT '购买方开户行及账号',\n" +
+                    "gmfdz VARCHAR ( 255 ) COMMENT '购买方地址',\n" +
+                    "gmfdh VARCHAR ( 30 ) COMMENT '购买方电话',\n" +
+                    "gmfdzdh VARCHAR ( 255 ) COMMENT '购买方地址电话',\n" +
+                    "jdhm VARCHAR ( 100 ) COMMENT '机打号码',\n" +
+                    "jqbh VARCHAR ( 100 ) COMMENT '机器编号',\n" +
+                    "hjje DECIMAL ( 18, 4 ) COMMENT '合计金额',\n" +
+                    "hjse DECIMAL ( 18, 4 ) COMMENT '合计税额',\n" +
+                    "jshj DECIMAL ( 18, 4 ) COMMENT '价税合计',\n" +
+                    "kpr VARCHAR ( 100 ) COMMENT '开票人',\n" +
+                    "skr VARCHAR ( 100 ) COMMENT '收款人',\n" +
+                    "fhr VARCHAR ( 100 ) COMMENT '复核人',\n" +
+                    "zfrq TIMESTAMP COMMENT '作废日期',\n" +
+                    "zfr VARCHAR ( 100 ) COMMENT '作废人',\n" +
+                    "yfpdm VARCHAR ( 50 ) NOT NULL COMMENT '原发票代码',\n" +
+                    "yfphm VARCHAR ( 50 ) NOT NULL COMMENT '原发票号码',\n" +
+                    "tzdbh VARCHAR ( 255 ) NOT NULL COMMENT '红字信息表通知单编号',\n" +
+                    "ly INT COMMENT '来源',\n" +
+                    "djzt INT COMMENT '单据状态',\n" +
+                    "ssyf VARCHAR ( 8 ) NOT NULL COMMENT '所属月份',\n" +
+                    "gxzt INT COMMENT '勾选状态（0-未勾选；1-已勾选）',\n" +
+                    "gxsj TIMESTAMP COMMENT '勾选时间',\n" +
+                    "gxrzsj TIMESTAMP COMMENT '勾选认证时间',\n" +
+                    "gxyt INT COMMENT '勾选用途（进项特有）',\n" +
+                    "rzzt INT COMMENT '认证状态: 0-未认证 1-已认证',\n" +
+                    "bdklx INT COMMENT '不抵扣类型',\n" +
+                    "dkbz INT COMMENT '代开标志（0-否，1-是）',\n" +
+                    "dkfsh VARCHAR ( 100 ) NOT NULL COMMENT '代开方税号',\n" +
+                    "dkfmc VARCHAR ( 100 ) COMMENT '代开方名称',\n" +
+                    "row_time timestamp ,\n" +
+                    "PRIMARY KEY ( id ) NOT ENFORCED \n" +
+                    ") WITH (\n" +
+                    "'connector' = 'elasticsearch-6',\n" +
+                    "'hosts' = 'http://localhost:9200',\n" +
+                    "'index' = 'invoice_vat',\n" +
+                    "'document-type' = '_doc'\n" +
+                    ")";
+
     static String sinkTableIfsStatOutputInvoiceDetailDaily = "CREATE TABLE `sink_stat_output_invoice_detail_daily` (\n" +
             "  `company_name` varchar(200) NOT NULL COMMENT '企业名称',\n" +
             "  `company_tax_number` varchar(30) NOT NULL COMMENT '企业税号',\n" +
@@ -387,6 +453,11 @@ public class InvoiceStatistics {
             "left join source_kp_custom t on v.company_tax_number = t.custom_duty " +
             "where t.del_flag = 0 ";
 
+
+    static String syncToSinkEsInvoice = "INSERT INTO sink_es_invoice_vat  " +
+            "select * " +
+            "from source_invoice_vat";
+
     @PostConstruct
     public void run() {
         Configuration configuration = new Configuration();
@@ -421,6 +492,7 @@ public class InvoiceStatistics {
         tEnv.executeSql(sourceTableImsCustomer);
         tEnv.executeSql(sourceTableIfsInvoice);
         tEnv.executeSql(sourceTableIfsInvoiceDetail);
+        tEnv.executeSql(sourceTableEsInvoice);
         tEnv.executeSql(sinkTableIfsStatOutputInvoiceDaily);
         tEnv.executeSql(sinkTableIfsStatOutputInvoiceDetailDaily);
         tEnv.executeSql(invoicePreView);
@@ -430,6 +502,7 @@ public class InvoiceStatistics {
         StatementSet statementSet = tEnv.createStatementSet();
         statementSet.addInsertSql(syncToSinkInvoice);
         statementSet.addInsertSql(syncToSinkInvoiceDetail);
+        statementSet.addInsertSql(syncToSinkEsInvoice);
         statementSet.execute();
     }
 }
