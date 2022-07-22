@@ -4,3 +4,4 @@ logging:
     com.example: info
   server:
     port: 8083
+
