@@ -478,6 +478,7 @@ public class InvoiceStatistics {
         StreamTableEnvironment tEnv = StreamTableEnvironment.create(env, settings);
         Configuration config = tEnv.getConfig().getConfiguration();
         config.set(ExecutionConfigOptions.TABLE_EXEC_SINK_NOT_NULL_ENFORCER, ExecutionConfigOptions.NotNullEnforcer.DROP);
+        config.setString(PipelineOptions.NAME, "invoice-statistics");
         registerUdf(tEnv);
         sqlModel(tEnv);
 
