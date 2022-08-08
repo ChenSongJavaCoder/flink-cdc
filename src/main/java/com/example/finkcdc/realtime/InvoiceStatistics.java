@@ -201,6 +201,7 @@ public class InvoiceStatistics {
             "  `company_tax_nature` varchar(10) NOT NULL COMMENT '纳税人性质',\n" +
             "  `company_sys_create_time` timestamp NOT NULL COMMENT '企业系统创建时间',\n" +
             "  `invoice_type` varchar(3) NOT NULL COMMENT '发票种类',\n" +
+            "  `invoice_type_order` int NOT NULL COMMENT '发票种类排序',\n" +
             "  `biz_date` varchar(10) NOT NULL COMMENT '统计日期 格式yyyy-MM-dd',\n" +
             "  `total_invoice_count` bigint NOT NULL COMMENT '总开票数量',\n" +
             "  `total_invoice_amount` DECIMAL(18,2)  COMMENT '总开票金额',\n" +
@@ -237,7 +238,7 @@ public class InvoiceStatistics {
             "     'password' = 'LjJl*ub#4*7^mJo'" +
             "     )";
 
-    static String sourceTableEsInvoice =
+    static String sinkTableEsInvoice =
             "CREATE TEMPORARY TABLE sink_es_invoice_vat (\n" +
                     "id BIGINT NOT NULL COMMENT '主键id',\n" +
                     "zhqysh VARCHAR NOT NULL COMMENT '账户企业税号',\n" +
@@ -399,6 +400,15 @@ public class InvoiceStatistics {
             "when t.custom_type = '08' then '小规模纳税人' else '' end) as company_tax_nature, " +
             "t.create_time as company_sys_create_time, " +
             "invoice_type, " +
+            // 相同企业名称+税号的企业，按照票种顺序排序：
+            // 增值税专用发票>增值税电子专用发票>增值税普通发票>增值税电子普通发票；
+            "(case " +
+            "when invoice_type = '004' then 1 " +
+            "when invoice_type= '028' then 2 " +
+            "when invoice_type = '007' then 3 " +
+            "when invoice_type = '026' then 4 " +
+            "else 5 " +
+            "end) as invoice_type_order, " +
             "biz_date, " +
             "total_invoice_count, " +
             "total_invoice_amount, " +
@@ -463,12 +473,14 @@ public class InvoiceStatistics {
         Configuration configuration = new Configuration();
         configuration.setString(RestOptions.BIND_PORT, "8082");
         configuration.setString(CheckpointingOptions.CHECKPOINT_STORAGE, "filesystem");
-        configuration.setString(CheckpointingOptions.CHECKPOINTS_DIRECTORY, "file:///Users/chensong/flink/checkpoint");
-        configuration.setString(CheckpointingOptions.SAVEPOINT_DIRECTORY, "file:///Users/chensong/flink/savepoint");
+//        configuration.setString(CheckpointingOptions.CHECKPOINTS_DIRECTORY, "file:///Users/chensong/flink/checkpoint");
+//        configuration.setString(CheckpointingOptions.SAVEPOINT_DIRECTORY, "file:///Users/chensong/flink/savepoint");
+        configuration.setString(CheckpointingOptions.CHECKPOINTS_DIRECTORY, "oss://rys-checkpoint/flink/checkpoint");
+        configuration.setString(CheckpointingOptions.SAVEPOINT_DIRECTORY, "oss://rys-checkpoint/flink/savepoint");
         configuration.set(TaskManagerOptions.MANAGED_MEMORY_SIZE, MemorySize.parse("2048m"));
         configuration.setBoolean(RestOptions.ENABLE_FLAMEGRAPH, false);
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment(configuration)
-                .enableCheckpointing(60000 * 5, CheckpointingMode.EXACTLY_ONCE)
+                .enableCheckpointing(1000 * 60, CheckpointingMode.EXACTLY_ONCE)
                 .setMaxParallelism(8)
                 .setParallelism(8);
         env.setStateBackend(new EmbeddedRocksDBStateBackend());
@@ -493,7 +505,7 @@ public class InvoiceStatistics {
         tEnv.executeSql(sourceTableImsCustomer);
         tEnv.executeSql(sourceTableIfsInvoice);
         tEnv.executeSql(sourceTableIfsInvoiceDetail);
-        tEnv.executeSql(sourceTableEsInvoice);
+        tEnv.executeSql(sinkTableEsInvoice);
         tEnv.executeSql(sinkTableIfsStatOutputInvoiceDaily);
         tEnv.executeSql(sinkTableIfsStatOutputInvoiceDetailDaily);
         tEnv.executeSql(invoicePreView);
